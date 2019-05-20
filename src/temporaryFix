@@ -1,0 +1,276 @@
+app:
+import React from 'react';
+import EmployersTable from './EmployersTable';
+import './App.css';
+
+class App extends React.Component {
+    constructor(props) {
+        super(props);
+        this.state = {counter: 0};
+    }
+    render() {
+        const {counter} = this.state
+        return (
+
+            <div className="App">
+                <link rel="stylesheet" href="https://fonts.googleapis.com/icon?family=Material+Icons"/>
+                <h1 className='title'> This is our squad</h1>
+                <EmployersTable/>
+            </div>
+        )
+            ;
+    }
+}
+
+export default App;
+
+EmployersTable
+
+import React from 'react';
+import Fab from '@material-ui/core/Fab';
+import Icon from '@material-ui/core/Icon';
+import Modal from 'react-modal';
+import Button from '@material-ui/core/Button';
+import Grid from '@material-ui/core/Grid';
+import DeleteIcon from '@material-ui/icons/Delete';
+import DeleteForeverIcon from '@material-ui/icons/DeleteForever';
+
+export class EmployersTable extends React.Component {
+    constructor(props) {
+        super(props);
+        this.state = {
+            personList: [],
+            modalIsOpen: false,
+            personAtModal: {},
+            values: {
+                currencyId: '',
+                price: '',
+                id: '',
+                description: '',
+                newPerson: false,
+            }
+
+        };
+        this.customStyles = {
+            content: {
+                top: '50%',
+                height: '30%',
+                width: '20%',
+                left: '50%',
+                right: 'auto',
+                bottom: 'auto',
+                marginRight: '-50%',
+                transform: 'translate(-50%, -50%)'
+            }
+        };
+    }
+
+    savePerson = () => {
+        const {newPerson} = this.state
+        debugger
+        if (!newPerson) {
+            const {values, personAtModal, personList} = this.state
+            if (!values['description']) {
+                values['description'] = personAtModal['description']
+            }
+            if (!values['currencyId']) {
+                values['currencyId'] = personAtModal['currencyId']
+            }
+            if (!values['id']) {
+                values['id'] = personAtModal['id']
+            }
+            if (!values['price']) {
+                values['price'] = personAtModal['price']
+            }
+            var newPersonList = personList.map(person => {
+                if (person.id === personAtModal.id) {
+                    person = values
+                }
+                return person
+            })
+            this.setState({personList: newPersonList});
+            debugger
+        }
+        else
+            this.addEmployer()
+    }
+    editPerson = (id) => {
+        const {personList, personAtModal} = this.state;
+        const currentPerson = personList.filter(person => person.id === id)
+        this.setState({personAtModal: currentPerson[0]})
+    }
+    addEmployer = () => {
+        const {values, personList} = this.state;
+        personList.push(values)
+        this.setState({
+            personList, values: {
+                currencyId: '',
+                price: '',
+                id: '',
+                description: '',
+            }, personAtModal: {}
+        })
+    }
+    removePerson = (personId) => {
+        const {personList} = this.state
+        const newList = personList.filter(person => {
+            if (personId === person.id)
+                return false
+            else
+                return true
+        })
+        this.setState({personList: newList})
+    }
+    loadPersons = () => {
+        fetch('PersonsFile.json')
+            .then(res => res.json())
+            .then(data => {
+                var x = this.state.personList.concat(data.products)
+                this.setState({personList: x})
+            })
+    }
+
+    handleChange = (event, field) => {
+        const {values} = this.state;
+        values[field] = event.target.value;
+        this.setState({values});
+        debugger
+    }
+
+    componentDidMount() {
+        this.loadPersons()
+    }
+
+    render() {
+        const {personList, personAtModal} = this.state
+
+        return (
+
+            <div className="employersTable">
+                <div className='titleRow'>
+                    <div className='descriptionTitle'>Description Employer</div>
+                    <div className='idTitle'>id Employer</div>
+                    <div className='salaryTitle'>salary Employer</div>
+                    <div className='editEmployer'>edit</div>
+                </div>
+                {personList.map(employer => {
+
+                    return <div className='employerLine'>
+                        <div className='description'>{employer.description}</div>
+                        <div className='id'>{employer.id}</div>
+                        <div className='price'>{employer.price}</div>
+                        <div className='edit'><Fab color="primary" aria-label="Edit" size='small'
+                                                   onClick={() => {
+                                                       this.editPerson(employer.id)
+                                                       this.setState({
+                                                           modalIsOpen: true, values: {
+                                                               currencyId: '',
+                                                               price: '',
+                                                               id: '',
+                                                               description: '',
+                                                           }
+                                                       })
+                                                   }}>
+                            <Icon>edit_icon</Icon>
+                        </Fab><Grid color="primary" className='removeButton' onClick={() => this.removePerson(employer.id)}>
+
+                            <DeleteForeverIcon/>
+                        </Grid></div>
+
+
+                    </div>
+                })}
+                <Modal
+                    isOpen={this.state.modalIsOpen}
+                    onAfterOpen={this.afterOpenModal}
+                    onRequestClose={this.closeModal}
+                    style={this.customStyles}
+                    contentLabel="Example Modal">
+                    <form className="formModal">
+                        <div className='priceModal'>
+                            price:<input type="text" name="price" defaultValue={personAtModal.price}
+                                         onChange={(e) => this.handleChange(e, 'price')}/>
+                        </div>
+                        <div className='idModal'>
+                            id:<input type="text" name="id" defaultValue={personAtModal.id}
+                                      onChange={(e) => this.handleChange(e, 'id')}/>
+                        </div>
+                        <div className='descriptionModal'>
+                            description:<input type="text" name="description" defaultValue={personAtModal.description}
+                                               onChange={(e) => this.handleChange(e, 'description')}/>
+                        </div>
+
+                    </form>
+                    <div className='modalButtons'>
+                        <Button variant="contained" color="primary" onClick={() => this.setState({modalIsOpen: false})}>
+                            Discard
+                        </Button>
+                        <Button variant="contained" color="primary" onClick={() => {
+                            this.savePerson('edit')
+                            this.setState({modalIsOpen: false, newPerson: false,})
+                        }
+                        }>
+                            Save
+                        </Button>
+                    </div>
+                </Modal>
+                <div className='addButon'><Fab onClick={() => {
+                    this.setState({
+                        modalIsOpen: true, personAtModal: {}, values: {
+                            currencyId: '',
+                            price: '',
+                            id: '',
+                            description: '',
+
+                        },
+                        newPerson: true
+                    })
+                }}><Icon color="primary">
+                    add_circle
+                </Icon></Fab>
+                </div>
+            </div>
+        )
+
+    }
+}
+
+export default EmployersTable;
+
+App.css
+
+.App{
+  padding: 10px;
+}
+.title{
+  color: cornflowerblue;
+  -webkit-background-clip: text;
+  font-weight: bold;
+  font-size: 34px;
+  font-family: arial, helvetica;
+  width: 600px;
+  margin: 50px auto;
+  text-align: center;
+}
+.titleRow{
+  display: flex;
+  justify-content: space-around;
+}
+.editEmployer{flex: 0.5;text-align: center; border-style: groove;} .salaryTitle{flex: 1;text-align: center; border-style: groove;} .descriptionTitle{flex: 1;text-align: center; border-style: groove;}.idTitle{flex: 1;text-align: center;  border-style: groove;}
+   .employerLine{display: flex; }
+.edit{flex: 0.5;text-align: center; border-style: groove;} .price{flex: 1;text-align: center; border-style: groove;} .description{flex: 1;text-align: center; border-style: groove;}.id{flex: 1;text-align: center; border-style: groove;}
+.addButon{
+  text-align: center;
+}
+.formModal{
+  display: flex;
+  flex-direction: column;
+  text-align: center;
+}
+.modalButtons{
+  text-align: center;
+  margin-top: 100px;
+}
+.descriptionModal{height: 40px; font-weight: bold; font-size: 18px;} .idModal{height: 40px; font-weight: bold; font-size: 18px;} .priceModal{height: 40px; font-weight: bold; font-size: 18px;}
+.removeButton{    display: inline; }
+.removeButton:hover{cursor: pointer}
