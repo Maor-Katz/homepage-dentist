@@ -3,59 +3,48 @@ import React from 'react';
 import EmployersTable from './EmployersTable';
 import './App.css';
 
-class App extends React.Component {
-    constructor(props) {
-        super(props);
-        this.state = {counter: 0};
-    }
-    render() {
-        const {counter} = this.state
-        return (
-
-            <div className="App">
-                <link rel="stylesheet" href="https://fonts.googleapis.com/icon?family=Material+Icons"/>
-                <h1 className='title'> This is our squad</h1>
-                <EmployersTable/>
-            </div>
-        )
-            ;
-    }
+function App() {
+  return (
+    <div className="App">
+<h1 className='title'>This is our Squad</h1>
+        <EmployersTable/>
+    </div>
+  );
 }
 
 export default App;
 
+
 EmployersTable
 
-import React from 'react';
+import React from "react";
+import AddIcon from '@material-ui/icons/Add';
 import Fab from '@material-ui/core/Fab';
 import Icon from '@material-ui/core/Icon';
+import DeleteIcon from '@material-ui/icons/Delete';
 import Modal from 'react-modal';
 import Button from '@material-ui/core/Button';
-import Grid from '@material-ui/core/Grid';
-import DeleteIcon from '@material-ui/icons/Delete';
-import DeleteForeverIcon from '@material-ui/icons/DeleteForever';
 
 export class EmployersTable extends React.Component {
     constructor(props) {
         super(props);
         this.state = {
-            personList: [],
+            personsList: [],
             modalIsOpen: false,
-            personAtModal: {},
             values: {
-                currencyId: '',
+                title: '',
+                description: '',
                 price: '',
                 id: '',
-                description: '',
-                newPerson: false,
-            }
-
-        };
+            },
+            personOnModal: {},
+            newPerson: false,
+        }
         this.customStyles = {
             content: {
                 top: '50%',
-                height: '30%',
                 width: '20%',
+                height: '30%',
                 left: '50%',
                 right: 'auto',
                 bottom: 'auto',
@@ -65,212 +54,185 @@ export class EmployersTable extends React.Component {
         };
     }
 
-    savePerson = () => {
-        const {newPerson} = this.state
-        debugger
-        if (!newPerson) {
-            const {values, personAtModal, personList} = this.state
-            if (!values['description']) {
-                values['description'] = personAtModal['description']
-            }
-            if (!values['currencyId']) {
-                values['currencyId'] = personAtModal['currencyId']
-            }
-            if (!values['id']) {
-                values['id'] = personAtModal['id']
-            }
-            if (!values['price']) {
-                values['price'] = personAtModal['price']
-            }
-            var newPersonList = personList.map(person => {
-                if (person.id === personAtModal.id) {
-                    person = values
-                }
-                return person
-            })
-            this.setState({personList: newPersonList});
-            debugger
-        }
-        else
-            this.addEmployer()
+    addPerson = () => {
+        const {personsList, values, newPerson} = this.state
+        personsList.push(values);
+        this.setState({personsList, newPerson: false})
     }
-    editPerson = (id) => {
-        const {personList, personAtModal} = this.state;
-        const currentPerson = personList.filter(person => person.id === id)
-        this.setState({personAtModal: currentPerson[0]})
-    }
-    addEmployer = () => {
-        const {values, personList} = this.state;
-        personList.push(values)
-        this.setState({
-            personList, values: {
-                currencyId: '',
-                price: '',
-                id: '',
-                description: '',
-            }, personAtModal: {}
-        })
-    }
-    removePerson = (personId) => {
-        const {personList} = this.state
-        const newList = personList.filter(person => {
-            if (personId === person.id)
+    deletePerson = (personId) => {
+        const {personsList} = this.state;
+        const newList= personsList.filter(person => {
+            if (person.id === personId)
                 return false
             else
-                return true
+            return true
         })
-        this.setState({personList: newList})
-    }
-    loadPersons = () => {
-        fetch('PersonsFile.json')
-            .then(res => res.json())
-            .then(data => {
-                var x = this.state.personList.concat(data.products)
-                this.setState({personList: x})
-            })
+        this.setState({personsList: newList})
     }
 
     handleChange = (event, field) => {
         const {values} = this.state;
-        values[field] = event.target.value;
-        this.setState({values});
-        debugger
+        values[field] = event.target.value
+        this.setState({values})
+    }
+    savePerson = () => {
+        const {values, personOnModal, personsList, newPerson} = this.state
+        if (!newPerson) {
+            if (!values['id']) {
+                values['id'] = personOnModal.id
+            }
+            if (!values['description']) {
+                values['description'] = personOnModal.description
+            }
+            if (!values['price']) {
+                values['price'] = personOnModal.price
+            }
+            if (!values['title']) {
+                values['title'] = personOnModal.title
+            }
+            var newPersonList = personsList.map(person => {
+                if (person.id === personOnModal.id) {
+                    person = values
+                }
+                return person
+            })
+            this.setState({personsList: newPersonList})
+        }
+        else {
+            this.addPerson()
+        }
     }
 
     componentDidMount() {
-        this.loadPersons()
+        const {personsList} = this.state
+        fetch('personsfile.json')
+            .then(res => res.json())
+            .then(data => {
+                const x = personsList.concat(data.products)
+                this.setState({personsList: x})
+            })
     }
 
     render() {
-        const {personList, personAtModal} = this.state
-
+        const {personsList, modalIsOpen, personOnModal} = this.state
+        debugger
         return (
-
             <div className="employersTable">
-                <div className='titleRow'>
-                    <div className='descriptionTitle'>Description Employer</div>
-                    <div className='idTitle'>id Employer</div>
-                    <div className='salaryTitle'>salary Employer</div>
-                    <div className='editEmployer'>edit</div>
+                <div className='titleOfTable'>
+                    <div className='titleTitle'>Employe's title</div>
+                    <div className='descriptionTitle'>Description</div>
+                    <div className='priceTitle'>Price</div>
+                    <div className='idTitle'>Employe's id</div>
+                    <div className='editAndRemoveTitle'>Edit/Remove</div>
                 </div>
-                {personList.map(employer => {
-
-                    return <div className='employerLine'>
-                        <div className='description'>{employer.description}</div>
-                        <div className='id'>{employer.id}</div>
-                        <div className='price'>{employer.price}</div>
-                        <div className='edit'><Fab color="primary" aria-label="Edit" size='small'
-                                                   onClick={() => {
-                                                       this.editPerson(employer.id)
-                                                       this.setState({
-                                                           modalIsOpen: true, values: {
-                                                               currencyId: '',
-                                                               price: '',
-                                                               id: '',
-                                                               description: '',
-                                                           }
-                                                       })
-                                                   }}>
-                            <Icon>edit_icon</Icon>
-                        </Fab><Grid color="primary" className='removeButton' onClick={() => this.removePerson(employer.id)}>
-
-                            <DeleteForeverIcon/>
-                        </Grid></div>
-
-
-                    </div>
-                })}
+                {personsList && <div className='table'>
+                    {personsList.map(person => {
+                        return <div className='person'>
+                            <div className='titlePerson'>{person.title}</div>
+                            <div className='descriptionPerson'>{person.description}</div>
+                            <div className='pricePerson'>{person.price}</div>
+                            <div className='idPerson'>{person.id}</div>
+                            <div className='editAndRemovePerson'><Fab color="primary" aria-label="Edit" size='small'
+                                                                      onClick={() => {
+                                                                          this.setState({
+                                                                              modalIsOpen: true,
+                                                                              personOnModal: person
+                                                                          })
+                                                                      }}>
+                                <Icon>edit_icon</Icon>
+                            </Fab> <Fab aria-label="Delete" size='small' className='removeButton' onClick={() => {
+                                this.deletePerson(person.id)
+                            }}>
+                                <DeleteIcon/>
+                            </Fab></div>
+                        </div>
+                    })}
+                </div>}
+                <div><Fab color="primary" aria-label="Add" className='addButton' onClick={() => {
+                    this.setState({modalIsOpen: true, newPerson: true})
+                    this.addPerson()
+                }}>
+                    <AddIcon/>
+                </Fab></div>
                 <Modal
-                    isOpen={this.state.modalIsOpen}
+                    isOpen={modalIsOpen}
                     onAfterOpen={this.afterOpenModal}
-                    onRequestClose={this.closeModal}
                     style={this.customStyles}
                     contentLabel="Example Modal">
-                    <form className="formModal">
-                        <div className='priceModal'>
-                            price:<input type="text" name="price" defaultValue={personAtModal.price}
-                                         onChange={(e) => this.handleChange(e, 'price')}/>
-                        </div>
-                        <div className='idModal'>
-                            id:<input type="text" name="id" defaultValue={personAtModal.id}
-                                      onChange={(e) => this.handleChange(e, 'id')}/>
-                        </div>
-                        <div className='descriptionModal'>
-                            description:<input type="text" name="description" defaultValue={personAtModal.description}
-                                               onChange={(e) => this.handleChange(e, 'description')}/>
-                        </div>
+                    <form name="myForm" className='modalForm'>
+                        <div className='titleModal'>Title: <input defaultValue={personOnModal.title} type="text"
+                                                                  name="fname" onChange={(e) => {
+                            this.handleChange(e, 'title')
+                        }}/></div>
+                        <div className='descModal'>Description: <input defaultValue={personOnModal.description}
+                                                                       type="text" name="fname" onChange={(e) => {
+                            this.handleChange(e, 'description')
+                        }}/></div>
+                        <div className='priceModal'>Price: <input defaultValue={personOnModal.price} type="text"
+                                                                  name="fname" onChange={(e) => {
+                            this.handleChange(e, 'price')
+                        }}/></div>
+                        <div className='idModal'>Id: <input defaultValue={personOnModal.id} type="number" name="fname"
+                                                            onChange={(e) => {
+                                                                this.handleChange(e, 'id')
+                                                            }}/></div>
 
                     </form>
                     <div className='modalButtons'>
-                        <Button variant="contained" color="primary" onClick={() => this.setState({modalIsOpen: false})}>
+                        <Button variant="contained" color="secondary" onClick={() => {
+                            this.setState({modalIsOpen: false, personOnModal: {},})
+                        }}>
                             Discard
                         </Button>
-                        <Button variant="contained" color="primary" onClick={() => {
-                            this.savePerson('edit')
-                            this.setState({modalIsOpen: false, newPerson: false,})
-                        }
-                        }>
+                        <Button variant="contained" color="secondary" onClick={() => {
+
+                            this.savePerson()
+                            this.setState({
+                                modalIsOpen: false, values: {
+                                    title: '',
+                                    description: '',
+                                    price: '',
+                                    id: '',
+                                },
+                                personOnModal: {}
+                            })
+                        }}>
                             Save
                         </Button>
                     </div>
                 </Modal>
-                <div className='addButon'><Fab onClick={() => {
-                    this.setState({
-                        modalIsOpen: true, personAtModal: {}, values: {
-                            currencyId: '',
-                            price: '',
-                            id: '',
-                            description: '',
-
-                        },
-                        newPerson: true
-                    })
-                }}><Icon color="primary">
-                    add_circle
-                </Icon></Fab>
-                </div>
             </div>
-        )
-
+        );
     }
 }
 
-export default EmployersTable;
+export default EmployersTable
 
 App.css
 
-.App{
-  padding: 10px;
+.App {
+  text-align: center;
 }
 .title{
   color: cornflowerblue;
-  -webkit-background-clip: text;
   font-weight: bold;
-  font-size: 34px;
+  font-size: 45px;
   font-family: arial, helvetica;
   width: 600px;
   margin: 50px auto;
   text-align: center;
 }
-.titleRow{
-  display: flex;
-  justify-content: space-around;
-}
-.editEmployer{flex: 0.5;text-align: center; border-style: groove;} .salaryTitle{flex: 1;text-align: center; border-style: groove;} .descriptionTitle{flex: 1;text-align: center; border-style: groove;}.idTitle{flex: 1;text-align: center;  border-style: groove;}
-   .employerLine{display: flex; }
-.edit{flex: 0.5;text-align: center; border-style: groove;} .price{flex: 1;text-align: center; border-style: groove;} .description{flex: 1;text-align: center; border-style: groove;}.id{flex: 1;text-align: center; border-style: groove;}
-.addButon{
-  text-align: center;
-}
-.formModal{
-  display: flex;
-  flex-direction: column;
-  text-align: center;
-}
-.modalButtons{
-  text-align: center;
-  margin-top: 100px;
-}
-.descriptionModal{height: 40px; font-weight: bold; font-size: 18px;} .idModal{height: 40px; font-weight: bold; font-size: 18px;} .priceModal{height: 40px; font-weight: bold; font-size: 18px;}
-.removeButton{    display: inline; }
-.removeButton:hover{cursor: pointer}
+.titleOfTable{display: flex;}
+.titleTitle{flex: 1;background-color: black;color: #fff;font-weight: bold;padding: 10px;}
+.descriptionTitle{flex: 1;background-color: black;color: #fff;font-weight: bold;padding: 10px;}
+.priceTitle{flex: 1;background-color: black;color: #fff;font-weight: bold;padding: 10px;}
+.idTitle{flex: 1;background-color: black;color: #fff;font-weight: bold;padding: 10px;}
+.editAndRemoveTitle{flex:0.5;background-color: black;color: #fff; font-weight: bold;padding: 10px;}
+
+.person{display: flex;}
+
+.titlePerson{flex: 1;border-style: groove;}.descriptionPerson{flex: 1;border-style: groove;} .pricePerson{flex: 1;border-style: groove;} .idPerson{flex: 1;border-style: groove;} .editAndRemovePerson{flex:0.5;border-style: groove;}
+.removeButton:hover{cursor: pointer;}
+.addButton{text-align: center}
+.modalForm{text-align: center; line-height: 35px; font-weight: bold; font-size: 18px;}
+.modalButtons{text-align: center; margin-top: 45px;}
